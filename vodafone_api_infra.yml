@@ -1,0 +1,488 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+
+  WARNING: You will be billed for the
+  AWS resources used if you create a stack from this template.
+
+  Once the assignment is completed, delete the CloudFormation stack and
+  terminate any other resources launched in relation to this exercise.
+
+  Feel free to do that as soon as you have completed
+  your document/presentation and before your interview.
+
+Parameters:
+  CandidateName: 
+    Type: String
+    Default: Anthony Eghobor
+    MaxLength: 50
+    MinLength: 3
+    Description: Anthony Eghobor
+    ConstraintDescription: Anthony Eghobor
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    Description: Amazon EC2 instance type for the instances
+
+
+  KeyPair:
+    Description: Which Key Pair would you like to use for remote access?
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: vodafone
+
+############################################################################
+   
+
+Resources:
+
+
+  ################### NETWORK ####################
+
+  VodafoneVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [VodafoneVPC, !Ref CandidateName]]
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VodafoneVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PublicSubnetA, !Ref CandidateName]]
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VodafoneVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PublicSubnetB, !Ref CandidateName]]
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId: !Ref VodafoneVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PrivateSubnetA, !Ref CandidateName]]
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      VpcId: !Ref VodafoneVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PrivateSubnetB, !Ref CandidateName]]
+  
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      VpcId: !Ref SAVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PrivateSubnetC, !Ref CandidateName]]
+
+  SAIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [IGW, !Ref CandidateName]]
+
+  SANetworkACL:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref SAVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [NACL, !Ref CandidateName]]
+  
+
+  SAPrivateNetworkACL:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VodafoneVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PrivateNACL, !Ref CandidateName]]
+
+  
+  SANACLEntry1:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: true
+      Protocol: -1
+      RuleAction: allow
+      RuleNumber: 100
+      NetworkAclId: !Ref VodafoneNetworkACL
+
+  SANACLEntry2:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Protocol: -1
+      RuleAction: allow
+      RuleNumber: 101
+      NetworkAclId: !Ref VodafoneNetworkACL
+
+  SANACLEntry3:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Protocol: 6
+      RuleAction: allow
+      RuleNumber: 100
+      PortRange:
+         From: 22
+         To: 22
+      NetworkAclId: !Ref VodafonePrivateNetworkACL 
+
+  SANACLEntry4:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Protocol: 6
+      RuleAction: allow
+      RuleNumber: 101
+      PortRange:
+        From: 80
+        To: 80
+      NetworkAclId: !Ref VodafonePrivateNetworkACL
+
+  SANACLEntry5:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Protocol: 6
+      RuleAction: allow
+      RuleNumber: 102
+      PortRange:
+        From: 3306
+        To: 3306
+      NetworkAclId: !Ref VodafonePrivateNetworkACL
+
+  SANACLEntry6:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+       NetworkAclId: !Ref VodafonePrivateNetworkACL
+       RuleNumber: 103
+       Protocol: -1
+       Egress: true
+       RuleAction: allow
+       CidrBlock: 0.0.0.0/0
+
+  subnetacl1:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref VodafoneNetworkACL
+      SubnetId: !Ref PublicSubnetA
+
+  subnetacl2:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref VodafoneNetworkACL
+      SubnetId: !Ref PublicSubnetB
+
+  subnetacl3:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref VodafonePrivateNetworkACL
+      SubnetId: !Ref PrivateSubnetA
+
+  subnetacl4:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref VodafonePrivateNetworkACL
+      SubnetId: !Ref PrivateSubnetB
+  
+  subnetacl5:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref VodafonePrivateNetworkACL
+      SubnetId: !Ref PrivateSubnetC
+      
+  SARoutePublic:
+    Type: AWS::EC2::RouteTable
+
+    
+    Properties:
+      VpcId: !Ref VodafoneVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PublicRoute, !Ref CandidateName]]
+
+  SARoutePrivate:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SAVPC
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [PrivateRoute, !Ref CandidateName]]
+
+  VodafoneSGALB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: AWS Assignment - Allows web traffic to Alb 
+      VpcId: !Ref SAVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [ALBSecurityGroup, !Ref CandidateName]]
+
+  VodafoneSGapp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: AWS Assignment - App server security group
+      VpcId: !Ref VodafoneVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref VodafoneSGALB
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [AppServerSecurityGroup, !Ref CandidateName]]
+
+
+  VodafoneGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VodafoneVPC
+      InternetGatewayId: !Ref VodafoneIGW
+
+  subnetRoutePublicA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VodafoneRoutePublic
+      SubnetId: !Ref PublicSubnetA
+
+  subnetRoutePublicB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VodafoneRoutePublic
+      SubnetId: !Ref PublicSubnetB
+
+  subnetRoutePrivateA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VodafoneRoutePrivate
+      SubnetId: !Ref PrivateSubnetA
+
+  subnetRoutePrivateB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VodafoneRoutePrivate
+      SubnetId: !Ref PrivateSubnetB
+
+  subnetRoutePrivateC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VodafoneRoutePrivate
+      SubnetId: !Ref PrivateSubnetC
+
+  publicroute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref VodafoneRoutePublic
+      GatewayId: !Ref VodafoneIGW
+
+
+  ###################### WEB SERVER ##########################
+
+ VodafoneLaunchConfig: 
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: true
+      ImageId: ami-0ffea00000f287d30
+      KeyName: !Ref KeyPair
+      SecurityGroups: 
+        - !Ref SASGapp
+      InstanceType: 
+        !Ref InstanceType
+      UserData: 
+        "Fn::Base64": |
+          #!/bin/bash
+          yum install -y httpd 
+          systemctl start httpd
+          systemctl enable httpd
+
+  VodafoneASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Join ["-", [WebServerASG, !Ref "CandidateName"]]
+      AvailabilityZones: 
+        - !Select [0, !GetAZs ""]
+        - !Select [1, !GetAZs ""]
+      VPCZoneIdentifier: 
+        - !Ref PublicSubnetA 
+        - !Ref PublicSubnetB
+      LaunchConfigurationName: !Ref VodafoneLaunchConfig
+      MinSize: 2
+      MaxSize: 4
+      DesiredCapacity: 2
+      TargetGroupARNs: 
+        - !Ref VodafoneTargetGroup
+      Tags:
+        - Key: Name
+          Value: !Join ["-", ["WebServer", !Ref CandidateName]]
+          PropagateAtLaunch: true
+ 
+  
+  ################## APPLICATION LOAD BALANCER ####################
+
+
+  VodafoneApplicationLoadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Name: "VodafoneApplicationLoadBalancer"
+      Scheme: "internet-facing"
+      Type: "application"
+      Subnets: 
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroups: 
+        - !Ref SASGALB
+      IpAddressType: "ipv4"
+      LoadBalancerAttributes: 
+        - Key: "deletion_protection.enabled"
+          Value: "false"
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [AppLoadBalancer, !Ref CandidateName]]
+
+  VodafoneHTTPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref VodafoneApplicationLoadBalancer
+      Port: 80
+      Protocol: "HTTP"
+      DefaultActions: 
+        - Order: 1
+          TargetGroupArn: !Ref VodafoneTargetGroup
+          Type: "forward"
+
+                
+  VodafoneTargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: "/"
+      Port: 80
+      Protocol: "HTTP"
+      HealthCheckPort: "traffic-port"
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 10
+      UnhealthyThresholdCount: 3
+      TargetType: "instance"
+      Matcher: 
+        HttpCode: "200"
+      HealthyThresholdCount: 3
+      VpcId: !Ref VodafoneVPC
+      Name: "Vodafone-devops-test-tg"
+      HealthCheckEnabled: true
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [AlbTargetGroup, !Ref CandidateName]]
+
+               
+  VodafoneListenerRule:
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+    Properties:
+      Priority: "1"
+      ListenerArn: !Ref VodafoneHTTPListener
+      Conditions: 
+        - Field: "host-header"
+          Values: 
+            - "anthony.eghobor.com"
+      Actions: 
+        - Type: "forward"
+          TargetGroupArn: !Ref VodafoneTargetGroup
+
+
+########################  DATABASE  - DYNAMODB ###########################
+
+
+  VodafoneApiDynamoDBTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: "created_at"
+          AttributeType: "S"
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema: 
+        - AttributeName: "id"
+          KeyType: "HASH"
+        - AttributeName: "created"
+          KeyType: "RANGE"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      
+# Outputs:
+#   LoadBalancerDNSName:
+#     Description: The DNSName of the load balancer
+#     Value: !GetAtt VodafoneApplicationLoadBalancer.DNSName
+
+
