@@ -1,34 +1,26 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
 
-  WARNING: You will be billed for the
-  AWS resources used if you create a stack from this template.
-
-  Once the assignment is completed, delete the CloudFormation stack and
-  terminate any other resources launched in relation to this exercise.
-
-  Feel free to do that as soon as you have completed
-  your document/presentation and before your interview.
-
 Parameters:
   CandidateName: 
     Type: String
     Default: Anthony Eghobor
-    MaxLength: 50
-    MinLength: 3
     Description: Anthony Eghobor
-    ConstraintDescription: Anthony Eghobor
 
   InstanceType:
     Type: String
     Default: t2.micro
     Description: Amazon EC2 instance type for the instances
 
-
   KeyPair:
-    Description: Which Key Pair would you like to use for remote access?
+    Description: Key Pair for remote access
     Type: 'AWS::EC2::KeyPair::KeyName'
     Default: vodafone
+
+  BastionInstanceType:
+    Type: String
+    Default: t2.micro
+    Description: Amazon EC2 instance for bastion host
 
 ############################################################################
    
@@ -106,14 +98,14 @@ Resources:
     Properties:
       CidrBlock: 10.0.4.0/24
       AvailabilityZone: !Select [2, !GetAZs ""]
-      VpcId: !Ref SAVPC
+      VpcId: !Ref VodafoneVPC
       Tags:
         - Key: environment
           Value: Vodafone-AWS-Assignment
         - Key: Name
           Value: !Join ["-", [PrivateSubnetC, !Ref CandidateName]]
 
-  SAIGW:
+  VodafoneIGW:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
@@ -122,10 +114,10 @@ Resources:
         - Key: Name
           Value: !Join ["-", [IGW, !Ref CandidateName]]
 
-  SANetworkACL:
+  VodafoneNetworkACL:
     Type: AWS::EC2::NetworkAcl
     Properties:
-      VpcId: !Ref SAVPC
+      VpcId: !Ref VodafoneVPC
       Tags:
         - Key: environment
           Value: Vodafone-AWS-Assignment
@@ -133,7 +125,7 @@ Resources:
           Value: !Join ["-", [NACL, !Ref CandidateName]]
   
 
-  SAPrivateNetworkACL:
+  VodafonePrivateNetworkACL:
     Type: AWS::EC2::NetworkAcl
     Properties:
       VpcId: !Ref VodafoneVPC
@@ -144,7 +136,7 @@ Resources:
           Value: !Join ["-", [PrivateNACL, !Ref CandidateName]]
 
   
-  SANACLEntry1:
+  VodafoneNACLEntry1:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 0.0.0.0/0
@@ -154,7 +146,7 @@ Resources:
       RuleNumber: 100
       NetworkAclId: !Ref VodafoneNetworkACL
 
-  SANACLEntry2:
+  VodafoneNACLEntry2:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 0.0.0.0/0
@@ -163,7 +155,7 @@ Resources:
       RuleNumber: 101
       NetworkAclId: !Ref VodafoneNetworkACL
 
-  SANACLEntry3:
+  VodafoneNACLEntry3:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -175,7 +167,7 @@ Resources:
          To: 22
       NetworkAclId: !Ref VodafonePrivateNetworkACL 
 
-  SANACLEntry4:
+  VodafoneNACLEntry4:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -187,7 +179,7 @@ Resources:
         To: 80
       NetworkAclId: !Ref VodafonePrivateNetworkACL
 
-  SANACLEntry5:
+  VodafoneNACLEntry5:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -199,7 +191,7 @@ Resources:
         To: 3306
       NetworkAclId: !Ref VodafonePrivateNetworkACL
 
-  SANACLEntry6:
+  VodafoneNACLEntry6:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
        NetworkAclId: !Ref VodafonePrivateNetworkACL
@@ -239,7 +231,7 @@ Resources:
       NetworkAclId: !Ref VodafonePrivateNetworkACL
       SubnetId: !Ref PrivateSubnetC
       
-  SARoutePublic:
+  VodafoneRoutePublic:
     Type: AWS::EC2::RouteTable
 
     
@@ -251,10 +243,10 @@ Resources:
         - Key: Name
           Value: !Join ["-", [PublicRoute, !Ref CandidateName]]
 
-  SARoutePrivate:
+  VodafoneRoutePrivate:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref SAVPC
+      VpcId: !Ref VodafoneVPC
       Tags:
         - Key: environment
           Value: Vodafone-AWS-Assignment
@@ -265,11 +257,15 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: AWS Assignment - Allows web traffic to Alb 
-      VpcId: !Ref SAVPC
+      VpcId: !Ref VodafoneVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: tcp
@@ -282,6 +278,22 @@ Resources:
         - Key: Name
           Value: !Join ["-", [ALBSecurityGroup, !Ref CandidateName]]
 
+  VodafoneSGBationAndController:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Bastion Host Security Group
+      VpcId: !Ref VodafoneVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 84.67.117.253/32 
+      Tags:
+        - Key: environment
+          Value: Vodafone-AWS-Assignment
+        - Key: Name
+          Value: !Join ["-", [BastionSecurityGroup, !Ref CandidateName]]
+
   VodafoneSGapp:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -291,18 +303,16 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourceSecurityGroupId: !Ref VodafoneSGALB
-      SecurityGroupEgress:
+          CidrIp: 84.67.117.253/32
         - IpProtocol: tcp
-          FromPort: 0
-          ToPort: 65535
-          CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref VodafoneSGBationAndController
       Tags:
         - Key: environment
           Value: Vodafone-AWS-Assignment
         - Key: Name
           Value: !Join ["-", [AppServerSecurityGroup, !Ref CandidateName]]
-
 
   VodafoneGWAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -350,22 +360,17 @@ Resources:
 
   ###################### WEB SERVER ##########################
 
- VodafoneLaunchConfig: 
+  VodafoneLaunchConfig: 
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       AssociatePublicIpAddress: true
       ImageId: ami-0ffea00000f287d30
       KeyName: !Ref KeyPair
+      IamInstanceProfile: !Ref ApiInstanceProfile
       SecurityGroups: 
-        - !Ref SASGapp
+        - !Ref VodafoneSGapp
       InstanceType: 
         !Ref InstanceType
-      UserData: 
-        "Fn::Base64": |
-          #!/bin/bash
-          yum install -y httpd 
-          systemctl start httpd
-          systemctl enable httpd
 
   VodafoneASG:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -387,6 +392,41 @@ Resources:
         - Key: Name
           Value: !Join ["-", ["WebServer", !Ref CandidateName]]
           PropagateAtLaunch: true
+
+  ApiRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+    
+  RolePolicies: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "vodafoneapi"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Roles: 
+        - Ref: "ApiRole"
+        
+  ApiInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Path: "/"
+      Roles: 
+        - Ref: "ApiRole"
  
   
   ################## APPLICATION LOAD BALANCER ####################
@@ -402,7 +442,7 @@ Resources:
         - !Ref PublicSubnetA
         - !Ref PublicSubnetB
       SecurityGroups: 
-        - !Ref SASGALB
+        - !Ref VodafoneSGALB
       IpAddressType: "ipv4"
       LoadBalancerAttributes: 
         - Key: "deletion_protection.enabled"
@@ -428,7 +468,7 @@ Resources:
     Properties:
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: "/"
-      Port: 80
+      Port: 3000
       Protocol: "HTTP"
       HealthCheckPort: "traffic-port"
       HealthCheckProtocol: "HTTP"
@@ -452,12 +492,42 @@ Resources:
       Priority: "1"
       ListenerArn: !Ref VodafoneHTTPListener
       Conditions: 
-        - Field: "host-header"
-          Values: 
-            - "anthony.eghobor.com"
+        - Field: path-pattern
+          Values:
+            - api
       Actions: 
         - Type: "forward"
           TargetGroupArn: !Ref VodafoneTargetGroup
+
+  #####################  BASTION AND ANSIBLE CONTROLLER ###############################
+
+
+  # VodafoneBastionASG:
+  #   Type: AWS::AutoScaling::AutoScalingGroup
+  #   Properties:
+  #     AutoScalingGroupName: !Join ["-", [BastionASG, !Ref "CandidateName"]]
+  #     LaunchConfigurationName: !Ref VodafoneBastionLaunchConfig
+  #     VPCZoneIdentifier:
+  #       - !Ref PublicSubnetA
+  #       - !Ref PublicSubnetB
+  #     MinSize: "1"
+  #     DesiredCapacity: "1"
+  #     MaxSize: "1"
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Join ["-", ["BastionHostASG", !Ref CandidateName]]
+  #         PropagateAtLaunch: true
+
+  # VodafoneBastionLaunchConfig:
+  #   Type: AWS::AutoScaling::LaunchConfiguration
+  #   Properties:
+  #     AssociatePublicIpAddress: true
+  #     ImageId: ami-0ffea00000f287d30
+  #     InstanceType: !Ref BastionInstanceType
+  #     KeyName: !Ref KeyPair
+  #     SecurityGroups:
+  #       - !Ref VodafoneSGBationAndController
+
 
 
 ########################  DATABASE  - DYNAMODB ###########################
@@ -468,13 +538,13 @@ Resources:
     Properties: 
       AttributeDefinitions: 
         - AttributeName: "created_at"
-          AttributeType: "S"
+          AttributeType: "N"
         - AttributeName: "id"
           AttributeType: "S"
       KeySchema: 
         - AttributeName: "id"
           KeyType: "HASH"
-        - AttributeName: "created"
+        - AttributeName: "created_at"
           KeyType: "RANGE"
       ProvisionedThroughput: 
         ReadCapacityUnits: "5"
