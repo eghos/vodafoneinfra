@@ -303,11 +303,11 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 84.67.117.253/32
+          CidrIp: 84.70.171.242/32
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          SourceSecurityGroupId: !Ref VodafoneSGBationAndController
+          CidrIp: 84.70.171.242/32
       Tags:
         - Key: environment
           Value: Vodafone-AWS-Assignment
@@ -386,8 +386,8 @@ Resources:
       MinSize: 2
       MaxSize: 4
       DesiredCapacity: 2
-      TargetGroupARNs: 
-        - !Ref VodafoneTargetGroup
+      # TargetGroupARNs: 
+      #   - !Ref VodafoneTargetGroup
       Tags:
         - Key: Name
           Value: !Join ["-", ["WebServer", !Ref CandidateName]]
@@ -536,6 +536,7 @@ Resources:
   VodafoneApiDynamoDBTable: 
     Type: AWS::DynamoDB::Table
     Properties: 
+      TableName: VodafoneApiDynamoDb
       AttributeDefinitions: 
         - AttributeName: "created_at"
           AttributeType: "N"
