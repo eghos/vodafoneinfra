@@ -179,17 +179,6 @@ Resources:
         To: 80
       NetworkAclId: !Ref VodafonePrivateNetworkACL
 
-  VodafoneNACLEntry5:
-    Type: AWS::EC2::NetworkAclEntry
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      Protocol: 6
-      RuleAction: allow
-      RuleNumber: 102
-      PortRange:
-        From: 3306
-        To: 3306
-      NetworkAclId: !Ref VodafonePrivateNetworkACL
 
   VodafoneNACLEntry6:
     Type: AWS::EC2::NetworkAclEntry
@@ -253,46 +242,42 @@ Resources:
         - Key: Name
           Value: !Join ["-", [PrivateRoute, !Ref CandidateName]]
 
-  VodafoneSGALB:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: AWS Assignment - Allows web traffic to Alb 
-      VpcId: !Ref VodafoneVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
-          CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: environment
-          Value: Vodafone-AWS-Assignment
-        - Key: Name
-          Value: !Join ["-", [ALBSecurityGroup, !Ref CandidateName]]
+  # VodafoneSGALB:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: AWS Assignment - Allows web traffic to Alb 
+  #     VpcId: !Ref VodafoneVPC
+  #     SecurityGroupIngress:
+  #       - IpProtocol: tcp
+  #         FromPort: 80
+  #         ToPort: 80
+  #         CidrIp: 0.0.0.0/0
+  #     SecurityGroupEgress:
+  #       - IpProtocol: tcp
+  #         FromPort: 80
+  #         ToPort: 80
+  #         CidrIp: 0.0.0.0/0
+  #     Tags:
+  #       - Key: environment
+  #         Value: Vodafone-AWS-Assignment
+  #       - Key: Name
+  #         Value: !Join ["-", [ALBSecurityGroup, !Ref CandidateName]]
 
-  VodafoneSGBationAndController:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Bastion Host Security Group
-      VpcId: !Ref VodafoneVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 84.67.117.253/32 
-      Tags:
-        - Key: environment
-          Value: Vodafone-AWS-Assignment
-        - Key: Name
-          Value: !Join ["-", [BastionSecurityGroup, !Ref CandidateName]]
+  # VodafoneSGBationAndController:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Bastion Host Security Group
+  #     VpcId: !Ref VodafoneVPC
+  #     SecurityGroupIngress:
+  #       - IpProtocol: tcp
+  #         FromPort: 22
+  #         ToPort: 22
+  #         CidrIp: 84.67.117.253/32 
+  #     Tags:
+  #       - Key: environment
+  #         Value: Vodafone-AWS-Assignment
+  #       - Key: Name
+  #         Value: !Join ["-", [BastionSecurityGroup, !Ref CandidateName]]
 
   VodafoneSGapp:
     Type: AWS::EC2::SecurityGroup
