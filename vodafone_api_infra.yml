@@ -432,72 +432,72 @@ Resources:
   ################## APPLICATION LOAD BALANCER ####################
 
 
-  VodafoneApplicationLoadBalancer:
-    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
-    Properties:
-      Name: "VodafoneApplicationLoadBalancer"
-      Scheme: "internet-facing"
-      Type: "application"
-      Subnets: 
-        - !Ref PublicSubnetA
-        - !Ref PublicSubnetB
-      SecurityGroups: 
-        - !Ref VodafoneSGALB
-      IpAddressType: "ipv4"
-      LoadBalancerAttributes: 
-        - Key: "deletion_protection.enabled"
-          Value: "false"
-      Tags:
-        - Key: Name
-          Value: !Join ["-", [AppLoadBalancer, !Ref CandidateName]]
+  # VodafoneApplicationLoadBalancer:
+  #   Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+  #   Properties:
+  #     Name: "VodafoneApplicationLoadBalancer"
+  #     Scheme: "internet-facing"
+  #     Type: "application"
+  #     Subnets: 
+  #       - !Ref PublicSubnetA
+  #       - !Ref PublicSubnetB
+  #     SecurityGroups: 
+  #       - !Ref VodafoneSGALB
+  #     IpAddressType: "ipv4"
+  #     LoadBalancerAttributes: 
+  #       - Key: "deletion_protection.enabled"
+  #         Value: "false"
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Join ["-", [AppLoadBalancer, !Ref CandidateName]]
 
-  VodafoneHTTPListener:
-    Type: "AWS::ElasticLoadBalancingV2::Listener"
-    Properties:
-      LoadBalancerArn: !Ref VodafoneApplicationLoadBalancer
-      Port: 80
-      Protocol: "HTTP"
-      DefaultActions: 
-        - Order: 1
-          TargetGroupArn: !Ref VodafoneTargetGroup
-          Type: "forward"
+  # VodafoneHTTPListener:
+  #   Type: "AWS::ElasticLoadBalancingV2::Listener"
+  #   Properties:
+  #     LoadBalancerArn: !Ref VodafoneApplicationLoadBalancer
+  #     Port: 80
+  #     Protocol: "HTTP"
+  #     DefaultActions: 
+  #       - Order: 1
+  #         TargetGroupArn: !Ref VodafoneTargetGroup
+  #         Type: "forward"
 
                 
-  VodafoneTargetGroup:
-    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
-    Properties:
-      HealthCheckIntervalSeconds: 30
-      HealthCheckPath: "/"
-      Port: 3000
-      Protocol: "HTTP"
-      HealthCheckPort: "traffic-port"
-      HealthCheckProtocol: "HTTP"
-      HealthCheckTimeoutSeconds: 10
-      UnhealthyThresholdCount: 3
-      TargetType: "instance"
-      Matcher: 
-        HttpCode: "200"
-      HealthyThresholdCount: 3
-      VpcId: !Ref VodafoneVPC
-      Name: "Vodafone-devops-test-tg"
-      HealthCheckEnabled: true
-      Tags:
-        - Key: Name
-          Value: !Join ["-", [AlbTargetGroup, !Ref CandidateName]]
+  # VodafoneTargetGroup:
+  #   Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+  #   Properties:
+  #     HealthCheckIntervalSeconds: 30
+  #     HealthCheckPath: "/"
+  #     Port: 3000
+  #     Protocol: "HTTP"
+  #     HealthCheckPort: "traffic-port"
+  #     HealthCheckProtocol: "HTTP"
+  #     HealthCheckTimeoutSeconds: 10
+  #     UnhealthyThresholdCount: 3
+  #     TargetType: "instance"
+  #     Matcher: 
+  #       HttpCode: "200"
+  #     HealthyThresholdCount: 3
+  #     VpcId: !Ref VodafoneVPC
+  #     Name: "Vodafone-devops-test-tg"
+  #     HealthCheckEnabled: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Join ["-", [AlbTargetGroup, !Ref CandidateName]]
 
                
-  VodafoneListenerRule:
-    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
-    Properties:
-      Priority: "1"
-      ListenerArn: !Ref VodafoneHTTPListener
-      Conditions: 
-        - Field: path-pattern
-          Values:
-            - api
-      Actions: 
-        - Type: "forward"
-          TargetGroupArn: !Ref VodafoneTargetGroup
+  # VodafoneListenerRule:
+  #   Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+  #   Properties:
+  #     Priority: "1"
+  #     ListenerArn: !Ref VodafoneHTTPListener
+  #     Conditions: 
+  #       - Field: path-pattern
+  #         Values:
+  #           - api
+  #     Actions: 
+  #       - Type: "forward"
+  #         TargetGroupArn: !Ref VodafoneTargetGroup
 
   #####################  BASTION AND ANSIBLE CONTROLLER ###############################
 
