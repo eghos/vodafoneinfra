@@ -13,7 +13,8 @@ When deployed cloudformation stack is created and that provisions the infrastruc
 
 Pull the code from this repository to the host that you may use for deployment. Making sure your environemtn is setup with the right access to aws environments i.e using access keys or role. You may need to change the CidrIp values  used in the security group block shown below to your IP in order to whitelist your IP to only access the webserver via ssh and http.
 
-  
+  ```
+
   VodafoneSGapp:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -34,7 +35,7 @@ Pull the code from this repository to the host that you may use for deployment. 
         - Key: Name
           Value: !Join ["-", [AppServerSecurityGroup, !Ref CandidateName]]
       
-
+```
 
 
  To deploy,  run the cloudformation cli command:
